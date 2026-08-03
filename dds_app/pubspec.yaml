@@ -1,0 +1,35 @@
+name: dds_app
+description: Digital Document Services — Portal Móvil
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # HTTP + manejo de cookies de sesión PHP
+  dio: ^5.4.3+1
+  dio_cookie_manager: ^3.1.1
+  cookie_jar: ^4.0.8
+  path_provider: ^2.1.4
+
+  # Estado global
+  provider: ^6.1.2
+
+  # Persistencia local
+  shared_preferences: ^2.2.3
+
+  # Fechas en español
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

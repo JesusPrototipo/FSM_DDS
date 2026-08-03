@@ -1,0 +1,23 @@
+/* ============================================================
+   WEBDDS — Estilos base
+   ============================================================ */
+
+/* Badges de estatus de reportes */
+.badge-pendiente  { background-color: #ffc107; color: #000; }
+.badge-en-proceso { background-color: #0dcaf0; color: #000; }
+.badge-finalizado { background-color: #198754; color: #fff; }
+.badge-cancelado  { background-color: #6c757d; color: #fff; }
+
+/* Tabla con hover más visible */
+.table-hover tbody tr:hover {
+    background-color: rgba(255,255,255,.05);
+}
+
+/* Cards de dashboard */
+.card .bi { opacity: .85; }
+
+/* Inputs de búsqueda */
+.search-bar { max-width: 360px; }
+
+/* Footer fijo al fondo */
+footer { margin-top: auto; }
