@@ -4,7 +4,7 @@
 //  Reemplaza: Reportes.php + guardar_datos.php
 // ============================================================
 require_once dirname(__DIR__, 2) . '/includes/init.php';
-Auth::requerirRol([ROL_ADMIN, ROL_CALLCENTER, ROL_TECNICO]);
+Auth::requerirRol([ROL_ADMIN, ROL_GERENCIA, ROL_ADMINISTRATIVO, ROL_TECNICO]);
 
 $titulo_pagina = 'Nuevo Reporte';
 $pagina_activa = 'reportes';

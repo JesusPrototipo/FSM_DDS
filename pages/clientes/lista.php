@@ -69,7 +69,7 @@ function urlPagina(int $p, string $q): string {
         <span class="badge bg-secondary ms-1"><?= $total ?></span>
     </h5>
 
-    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR)): ?>
+    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_GERENCIA, ROL_ADMINISTRATIVO, ROL_VENDEDOR)): ?>
     <a href="<?= BASE_PATH ?>/pages/clientes/nuevo.php" class="btn btn-primary btn-sm">
         <i class="bi bi-person-plus me-1"></i> Nuevo Cliente
     </a>

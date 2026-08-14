@@ -151,9 +151,9 @@ if ($method === 'POST') {
 
     // ── Crear cliente ────────────────────────────────────────
     if ($accion === 'crear_cliente') {
-        Auth::requerirRol([ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
 
-        $campos = ['razon','reporto','direccion','telefono','horario'];
+        $campos = ['razon','reporto','direccion','ciudad','telefono','horario'];
         $datos  = [];
         foreach ($campos as $c) {
             $val = trim($_POST[$c] ?? '');
@@ -171,13 +171,14 @@ if ($method === 'POST') {
         }
 
         $stmt = $pdo->prepare(
-            "INSERT INTO clientes (razon, reporto, direccion, telefono, horario)
-             VALUES (:razon, :reporto, :direccion, :telefono, :horario)"
+            "INSERT INTO clientes (razon, reporto, direccion, ciudad, telefono, horario)
+             VALUES (:razon, :reporto, :direccion, :ciudad, :telefono, :horario)"
         );
         $stmt->execute([
             ':razon'     => $datos['razon'],
             ':reporto'   => $datos['reporto'],
             ':direccion' => $datos['direccion'],
+            ':ciudad'    => $datos['ciudad'],
             ':telefono'  => $datos['telefono'],
             ':horario'   => $datos['horario'],
         ]);
@@ -187,7 +188,7 @@ if ($method === 'POST') {
 
     // ── Crear departamento ───────────────────────────────────
     if ($accion === 'crear_depto') {
-        Auth::requerirRol([ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
 
         $clienteId   = (int)($_POST['cliente_id']   ?? 0);
         $departamento = trim($_POST['departamento'] ?? '');
@@ -219,7 +220,7 @@ if ($method === 'POST') {
 
     // ── Crear equipo / impresora ─────────────────────────────
     if ($accion === 'crear_equipo') {
-        Auth::requerirRol([ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
 
         $deptoId   = (int)($_POST['departamento_id'] ?? 0);
         $clienteId = (int)($_POST['cliente_id']      ?? 0);
@@ -257,7 +258,7 @@ if ($method === 'POST') {
 
     // ── Actualizar departamento ─────────────────────────────
     if ($accion === 'actualizar_depto') {
-        Auth::requerirRol([ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
 
         $id           = (int)($_POST['id']           ?? 0);
         $departamento = trim($_POST['departamento']  ?? '');
@@ -287,14 +288,14 @@ if ($method === 'POST') {
 
     // ── Actualizar cliente ───────────────────────────────────
     if ($accion === 'actualizar_cliente') {
-        Auth::requerirRol([ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
 
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) jsonResponse(['error' => 'ID inválido.'], 400);
 
         $stmt = $pdo->prepare(
             "UPDATE clientes
-             SET razon=:razon, reporto=:reporto, direccion=:direccion,
+             SET razon=:razon, reporto=:reporto, direccion=:direccion, ciudad=:ciudad,
                  telefono=:telefono, horario=:horario
              WHERE id=:id"
         );
@@ -302,6 +303,7 @@ if ($method === 'POST') {
             ':razon'     => trim($_POST['razon']     ?? ''),
             ':reporto'   => trim($_POST['reporto']   ?? ''),
             ':direccion' => trim($_POST['direccion'] ?? ''),
+            ':ciudad'    => trim($_POST['ciudad']    ?? ''),
             ':telefono'  => trim($_POST['telefono']  ?? ''),
             ':horario'   => trim($_POST['horario']   ?? ''),
             ':id'        => $id,

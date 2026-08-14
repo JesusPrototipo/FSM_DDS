@@ -24,8 +24,9 @@ $datos = $stmt->fetch();
 
 $rolLabel = [
     'admin'      => ['Administrador', 'bg-danger'],
+    'gerencia'   => ['Gerencia',      'bg-info'],
     'tecnico'    => ['Técnico',       'bg-primary'],
-    'callcenter' => ['Call Center',   'bg-info text-dark'],
+    'administrativo' => ['Administrativo', 'bg-secondary'],
     'vendedor'   => ['Vendedor',      'bg-warning text-dark'],
 ];
 [$rl, $rc] = $rolLabel[$datos['rol']] ?? [$datos['rol'], 'bg-secondary'];

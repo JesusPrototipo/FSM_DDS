@@ -7,9 +7,10 @@ require_once __DIR__ . '/config.php';
 // ============================================================
 
 // Roles disponibles en el sistema
-define('ROL_ADMIN',     'admin');      // Acceso total
-define('ROL_TECNICO',   'tecnico');    // Reportes, bitácora, estatus
-define('ROL_CALLCENTER','callcenter'); // Crear reportes, ver clientes
+define('ROL_ADMIN',     'admin');  
+define('ROL_TECNICO',   'tecnico');    // Acceso total
+define('ROL_GERENCIA',  'gerencia');   // Reportes, bitácora, estatus
+define('ROL_ADMINISTRATIVO', 'administrativo'); // Crear reportes, ver clientes
 define('ROL_VENDEDOR',  'vendedor');   // Agregar clientes, equipos
 
 class Auth

@@ -54,7 +54,7 @@ if ($method === 'POST') {
         $pass    = trim($_POST['password'] ?? '');
         $rol     = trim($_POST['rol']     ?? '');
 
-        $rolesValidos = ['admin', 'tecnico', 'callcenter', 'vendedor'];
+        $rolesValidos = ['admin' , 'gerencia', 'tecnico', 'administrativo', 'vendedor'];
         if (!$nombre || !$usuario || !$pass || !in_array($rol, $rolesValidos, true)) {
             jsonResponse(['error' => 'Todos los campos son obligatorios.'], 422);
         }
@@ -90,7 +90,7 @@ if ($method === 'POST') {
         $usuario = trim($_POST['usuario'] ?? '');
         $rol     = trim($_POST['rol']     ?? '');
 
-        $rolesValidos = ['admin', 'tecnico', 'callcenter', 'vendedor'];
+        $rolesValidos = ['admin' , 'gerencia', 'tecnico', 'administrativo', 'vendedor'];
         if (!$id || !$nombre || !$usuario || !in_array($rol, $rolesValidos, true)) {
             jsonResponse(['error' => 'Datos incompletos.'], 422);
         }

@@ -61,7 +61,7 @@ $badgeClass = [
        class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> Regresar
     </a>
-    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_CALLCENTER, ROL_TECNICO)): ?>
+    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_GERENCIA, ROL_ADMINISTRATIVO, ROL_TECNICO)): ?>
     <a href="<?= BASE_PATH ?>/pages/reportes/nuevo.php?equipo_id=<?= $id ?>&cliente_id=<?= $eq['cliente_id'] ?>"
        class="btn btn-sm btn-primary">
         <i class="bi bi-plus-circle me-1"></i> Nuevo Reporte
@@ -78,7 +78,7 @@ $badgeClass = [
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-printer me-1"></i> Datos del Equipo</span>
-                <?php if (Auth::tieneRol(ROL_ADMIN, ROL_VENDEDOR, ROL_CALLCENTER)): ?>
+                <?php if (Auth::tieneRol(ROL_ADMIN, ROL_VENDEDOR, ROL_GERENCIA, ROL_ADMINISTRATIVO)): ?>
                 <button class="btn btn-sm btn-outline-warning" onclick="abrirEdicion()">
                     <i class="bi bi-pencil"></i>
                 </button>

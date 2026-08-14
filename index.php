@@ -331,12 +331,12 @@ $badgeClass = [
         <i class="bi bi-lightning me-1"></i> Acciones rápidas
     </div>
     <div class="card-body d-flex flex-wrap gap-2">
-        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_CALLCENTER, ROL_TECNICO)): ?>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_GERENCIA, ROL_TECNICO)): ?>
         <a href="<?= BASE_PATH ?>/pages/reportes/nuevo.php" class="btn btn-primary">
             <i class="bi bi-plus-circle me-1"></i> Nuevo Reporte
         </a>
         <?php endif; ?>
-        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR)): ?>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_GERENCIA, ROL_ADMINISTRATIVO, ROL_VENDEDOR)): ?>
         <a href="<?= BASE_PATH ?>/pages/clientes/nuevo.php" class="btn btn-outline-primary">
             <i class="bi bi-person-plus me-1"></i> Nuevo Cliente
         </a>

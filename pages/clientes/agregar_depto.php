@@ -5,7 +5,7 @@
 //  Llamado desde: detalle.php → botón "Agregar"
 // ============================================================
 require_once dirname(__DIR__, 2) . '/includes/init.php';
-Auth::requerirRol([ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR]);
+Auth::requerirRol([ROL_ADMIN, ROL_GERENCIA, ROL_ADMINISTRATIVO, ROL_VENDEDOR]);
 
 $clienteId = (int)($_GET['cliente_id'] ?? 0);
 if (!$clienteId) {

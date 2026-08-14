@@ -17,6 +17,8 @@ $pdo = Database::get();
 $pagina     = max(1, (int)($_GET['pagina']     ?? 1));
 $estatus    = $_GET['estatus']    ?? '';
 $tecnico_id = (int)($_GET['tecnico_id'] ?? 0);
+$fecha      = trim($_GET['fecha']   ?? '');
+$ciudad     = trim($_GET['ciudad']  ?? '');
 $q          = trim($_GET['q']          ?? '');
 $porPagina  = 20;
 $offset     = ($pagina - 1) * $porPagina;
@@ -26,6 +28,8 @@ $where  = ['1=1'];
 $params = [];
 if ($estatus)    { $where[] = 'r.estatus = :estatus';       $params[':estatus']    = $estatus; }
 if ($tecnico_id) { $where[] = 'r.tecnico_id = :tid';        $params[':tid']        = $tecnico_id; }
+if ($fecha)       { $where[] = 'r.fecha = :fecha';           $params[':fecha']      = $fecha; }
+if ($ciudad)      { $where[] = 'c.ciudad = :ciudad';         $params[':ciudad']     = $ciudad; }
 if ($q) {
     $where[]       = '(c.razon LIKE :q1 OR i.modelo LIKE :q2 OR i.serie LIKE :q3)';
     $like          = "%$q%";
@@ -50,7 +54,7 @@ $total = (int)$stmtT->fetchColumn();
 // Datos
 $stmt = $pdo->prepare(
     "SELECT r.id, r.fecha, r.falla, r.estatus,
-            c.razon, d.departamento,
+            c.razon, c.ciudad, d.departamento,
             i.marca, i.modelo, i.serie,
             u.nombre AS tecnico_nombre
      $baseJoin
@@ -68,6 +72,13 @@ $tecnicos = $pdo->query(
     "SELECT id, nombre FROM usuarios WHERE activo=1 AND rol IN ('admin','tecnico') ORDER BY nombre"
 )->fetchAll();
 
+// Ciudades para filtro (solo las que ya tienen clientes registrados)
+$ciudades = $pdo->query(
+    "SELECT DISTINCT ciudad FROM clientes
+     WHERE ciudad IS NOT NULL AND ciudad <> ''
+     ORDER BY ciudad"
+)->fetchAll(PDO::FETCH_COLUMN);
+
 // Contadores por estatus (para badges en tabs)
 $contadores = [];
 foreach (['pendiente','en proceso','finalizado','cancelado'] as $est) {
@@ -82,6 +93,8 @@ function urlFiltro(array $extra = []): string {
     $base = array_filter([
         'estatus'    => $_GET['estatus']    ?? '',
         'tecnico_id' => $_GET['tecnico_id'] ?? '',
+        'fecha'      => $_GET['fecha']      ?? '',
+        'ciudad'     => $_GET['ciudad']     ?? '',
         'q'          => $_GET['q']          ?? '',
         'pagina'     => '1',
     ]);
@@ -100,7 +113,7 @@ $badgeClass = [
     <h5 class="mb-0">
         Reportes <span class="badge bg-secondary ms-1"><?= $total ?></span>
     </h5>
-    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_CALLCENTER, ROL_TECNICO)): ?>
+    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_TECNICO)): ?>
     <a href="<?= BASE_PATH ?>/pages/reportes/nuevo.php" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-circle me-1"></i> Nuevo Reporte
     </a>
@@ -139,7 +152,7 @@ $badgeClass = [
     <input type="hidden" name="estatus" value="<?= e($estatus) ?>">
     <?php endif; ?>
 
-    <div class="col-md-5">
+    <div class="col-md-3">
         <div class="input-group input-group-sm">
             <input type="text" name="q" class="form-control"
                    placeholder="Cliente, modelo o serie…"
@@ -147,15 +160,10 @@ $badgeClass = [
             <button class="btn btn-secondary" type="submit">
                 <i class="bi bi-search"></i>
             </button>
-            <?php if ($q): ?>
-            <a href="<?= urlFiltro(['q' => '']) ?>" class="btn btn-outline-secondary">
-                <i class="bi bi-x"></i>
-            </a>
-            <?php endif; ?>
         </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-3">
         <select name="tecnico_id" class="form-select form-select-sm" onchange="this.form.submit()">
             <option value="">— Todos los técnicos —</option>
             <?php foreach ($tecnicos as $t): ?>
@@ -166,8 +174,25 @@ $badgeClass = [
         </select>
     </div>
 
-    <div class="col-md-3 d-flex gap-1">
-        <?php if ($q || $tecnico_id || $estatus): ?>
+    <div class="col-md-2">
+        <input type="date" name="fecha" class="form-control form-control-sm"
+               value="<?= e($fecha) ?>" onchange="this.form.submit()"
+               title="Filtrar por fecha del reporte">
+    </div>
+
+    <div class="col-md-2">
+        <select name="ciudad" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">— Todas las ciudades —</option>
+            <?php foreach ($ciudades as $c): ?>
+            <option value="<?= e($c) ?>" <?= $ciudad === $c ? 'selected' : '' ?>>
+                <?= e($c) ?>
+            </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <div class="col-md-2 d-flex gap-1">
+        <?php if ($q || $tecnico_id || $estatus || $fecha || $ciudad): ?>
         <a href="?" class="btn btn-outline-secondary btn-sm w-100">
             <i class="bi bi-x-circle me-1"></i> Limpiar filtros
         </a>
@@ -205,7 +230,12 @@ $badgeClass = [
                     <td class="text-secondary small"><?= $r['id'] ?></td>
                     <td>
                         <div class="fw-semibold"><?= e($r['razon']) ?></div>
-                        <div class="text-secondary small"><?= e($r['departamento']) ?></div>
+                        <div class="text-secondary small">
+                            <?= e($r['departamento']) ?>
+                            <?php if (!empty($r['ciudad'])): ?>
+                            · <?= e($r['ciudad']) ?>
+                            <?php endif; ?>
+                        </div>
                     </td>
                     <td>
                         <div><?= e($r['marca'] . ' ' . $r['modelo']) ?></div>

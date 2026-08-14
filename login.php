@@ -22,12 +22,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([':usuario' => $usuarioInput]);
         $user = $stmt->fetch();
 
-        if ($user && $user['activo'] && password_verify($passInput, $user['password'])) {
-            $_SESSION['usuario_id']     = $user['id'];
-            $_SESSION['usuario_nombre'] = $user['nombre'];
-            $_SESSION['usuario_rol']    = $user['rol'];
-            header('Location: ' . BASE_PATH . '/index.php');
-            exit;
+        if ($user && password_verify($passInput, $user['password'])) {
+            if (!$user['activo']) {
+                // Usuario y contraseña correctos, pero la cuenta aún no ha
+                // sido aprobada por un administrador (registro público).
+                $error = 'Tu cuenta está pendiente de aprobación por un administrador.';
+            } else {
+                $_SESSION['usuario_id']     = $user['id'];
+                $_SESSION['usuario_nombre'] = $user['nombre'];
+                $_SESSION['usuario_rol']    = $user['rol'];
+                header('Location: ' . BASE_PATH . '/index.php');
+                exit;
+            }
         } else {
             $error = 'Usuario o contraseña incorrectos.';
         }
@@ -95,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </form>
             <p class="text-center text-secondary small mt-3">
-                    ¿No tienes una cuenta? <a href="error.php?code=404">Solicita una cuenta</a>
+                    ¿No tienes una cuenta? <a href="registro.php">Regístrate aquí</a>
             </p>
         </div>
     </div>

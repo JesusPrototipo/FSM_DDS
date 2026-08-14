@@ -83,13 +83,13 @@ $badgeClass = [
         <i class="bi bi-arrow-left me-1"></i> Regresar
     </a>
     <div class="d-flex gap-2">
-        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_CALLCENTER, ROL_TECNICO)): ?>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_TECNICO)): ?>
         <a href="<?= BASE_PATH ?>/pages/reportes/nuevo.php?cliente_id=<?= $id ?>"
            class="btn btn-primary btn-sm">
             <i class="bi bi-plus-circle me-1"></i> Nuevo Reporte
         </a>
         <?php endif; ?>
-        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_VENDEDOR, ROL_CALLCENTER)): ?>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_TECNICO)): ?>
         <button class="btn btn-outline-warning btn-sm" onclick="abrirEdicion()">
             <i class="bi bi-pencil me-1"></i> Editar
         </button>
@@ -120,6 +120,10 @@ $badgeClass = [
                     <div><?= e($cliente['direccion']) ?: '—' ?></div>
                 </div>
                 <div class="col-md-6">
+                    <span class="text-secondary small">Ciudad</span>
+                    <div><?= e($cliente['ciudad']) ?: '—' ?></div>
+                </div>
+                <div class="col-md-6">
                     <span class="text-secondary small">Horario</span>
                     <div><?= e($cliente['horario']) ?: '—' ?></div>
                 </div>
@@ -140,10 +144,15 @@ $badgeClass = [
                     <input type="text" class="form-control form-control-sm" id="edit-reporto"
                            value="<?= e($cliente['reporto']) ?>">
                 </div>
-                <div class="col-12">
+                <div class="col-md-8">
                     <label class="form-label form-label-sm">Dirección</label>
                     <input type="text" class="form-control form-control-sm" id="edit-direccion"
                            value="<?= e($cliente['direccion']) ?>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Ciudad</label>
+                    <input type="text" class="form-control form-control-sm" id="edit-ciudad"
+                           value="<?= e($cliente['ciudad']) ?>">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label form-label-sm">Teléfono</label>
@@ -172,7 +181,7 @@ $badgeClass = [
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-building me-1"></i> Departamentos y Equipos</span>
-        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_VENDEDOR, ROL_CALLCENTER)): ?>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_TECNICO)): ?>
         <a href="<?= BASE_PATH ?>/pages/clientes/agregar_depto.php?cliente_id=<?= $id ?>"
            class="btn btn-outline-primary btn-sm">
             <i class="bi bi-plus"></i> Agregar
@@ -198,7 +207,7 @@ $badgeClass = [
                             <?= count($d['equipos']) ?> equipo<?= count($d['equipos']) !== 1 ? 's' : '' ?>
                         </span>
                     </button>
-                    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR)): ?>
+                    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_TECNICO)): ?>
                     <button class="btn btn-sm btn-outline-warning ms-2 me-3"
                             style="z-index:10; position:relative;"
                             title="Editar nombre del departamento"
@@ -418,6 +427,7 @@ async function guardarEdicion() {
     form.append('razon',     document.getElementById('edit-razon').value.trim());
     form.append('reporto',   document.getElementById('edit-reporto').value.trim());
     form.append('direccion', document.getElementById('edit-direccion').value.trim());
+    form.append('ciudad',    document.getElementById('edit-ciudad').value.trim());
     form.append('telefono',  document.getElementById('edit-telefono').value.trim());
     form.append('horario',   document.getElementById('edit-horario').value.trim());
 

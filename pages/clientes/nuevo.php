@@ -5,7 +5,7 @@
 //  Wizard de 3 pasos en una sola página (sin redirecciones intermedias)
 // ============================================================
 require_once dirname(__DIR__, 2) . '/includes/init.php';
-Auth::requerirRol([ROL_ADMIN, ROL_CALLCENTER, ROL_VENDEDOR]);
+Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
 
 $titulo_pagina = 'Nuevo Cliente';
 $pagina_activa = 'clientes';
@@ -60,9 +60,13 @@ require_once INCLUDES . '/header.php';
                     <label class="form-label">Contacto</label>
                     <input type="text" class="form-control" id="reporto" placeholder="Juan Pérez">
                 </div>
-                <div class="col-12">
+                <div class="col-md-8">
                     <label class="form-label">Dirección *</label>
-                    <input type="text" class="form-control" id="direccion" placeholder="Calle #, Colonia, Ciudad">
+                    <input type="text" class="form-control" id="direccion" placeholder="Calle #, Colonia">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Ciudad</label>
+                    <input type="text" class="form-control" id="ciudad" placeholder="Ej: Saltillo">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Teléfono</label>
@@ -243,6 +247,7 @@ async function guardarCliente() {
     const razon     = document.getElementById('razon').value.trim();
     const reporto   = document.getElementById('reporto').value.trim();
     const direccion = document.getElementById('direccion').value.trim();
+    const ciudad    = document.getElementById('ciudad').value.trim();
     const telefono  = document.getElementById('telefono').value.trim();
     const horario   = document.getElementById('horario').value.trim();
 
@@ -257,6 +262,7 @@ async function guardarCliente() {
     form.append('razon',     razon);
     form.append('reporto',   reporto);
     form.append('direccion', direccion);
+    form.append('ciudad',    ciudad);
     form.append('telefono',  telefono);
     form.append('horario',   horario);
 

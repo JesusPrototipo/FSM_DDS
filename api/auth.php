@@ -42,7 +42,12 @@ if ($method === 'POST') {
     $stmt->execute([':u' => $usuario]);
     $user = $stmt->fetch();
 
-    if ($user && $user['activo'] && password_verify($password, $user['password'])) {
+    if ($user && password_verify($password, $user['password'])) {
+        if (!$user['activo']) {
+            // Registro público en espera de aprobación por un administrador
+            jsonResponse(['error' => 'Tu cuenta está pendiente de aprobación por un administrador.'], 403);
+        }
+
         $_SESSION['usuario_id']     = $user['id'];
         $_SESSION['usuario_nombre'] = $user['nombre'];
         $_SESSION['usuario_rol']    = $user['rol'];

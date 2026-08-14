@@ -20,9 +20,10 @@ $usuarios = $pdo->query(
 
 $rolLabel = [
     'admin'      => ['Admin',      'bg-danger'],
+    'gerencia'   => ['Gerencia',   'bg-info'],
     'tecnico'    => ['Técnico',    'bg-primary'],
-    'callcenter' => ['Call Center','bg-info text-dark'],
-    'vendedor'   => ['Vendedor',   'bg-warning text-dark'],
+    'administrativo' => ['Administrativo', 'bg-primary'],
+    'vendedor'   => ['Vendedor',   'bg-primary'],
 ];
 $yo = Auth::usuario();
 ?>
@@ -67,7 +68,7 @@ $yo = Auth::usuario();
                     <?php if ($u['activo']): ?>
                     <span class="badge bg-success">Activo</span>
                     <?php else: ?>
-                    <span class="badge bg-secondary">Inactivo</span>
+                    <span class="badge bg-warning">Inactivo</span>
                     <?php endif; ?>
                 </td>
                 <td class="small text-secondary">
@@ -128,8 +129,9 @@ $yo = Auth::usuario();
                         <label class="form-label">Rol *</label>
                         <select class="form-select" id="c-rol">
                             <option value="">Selecciona…</option>
+                            <option value="gerencia">Gerencia</option>
                             <option value="tecnico">Técnico</option>
-                            <option value="callcenter">Call Center</option>
+                            <option value="administrativo">Administrativo</option>
                             <option value="vendedor">Vendedor</option>
                             <option value="admin">Admin</option>
                         </select>
@@ -179,7 +181,8 @@ $yo = Auth::usuario();
                         <label class="form-label">Rol *</label>
                         <select class="form-select" id="e-rol">
                             <option value="tecnico">Técnico</option>
-                            <option value="callcenter">Call Center</option>
+                            <option value="gerencia">Gerencia</option>
+                            <option value="administrativo">Administrativo</option>
                             <option value="vendedor">Vendedor</option>
                             <option value="admin">Admin</option>
                         </select>
