@@ -84,9 +84,13 @@ if ($preClienteId) {
                             <span class="text-secondary">Horario:</span>
                             <span id="info-horario"></span>
                         </div>
-                        <div class="col-12 mt-1">
+                        <div class="col-8 mt-1">
                             <span class="text-secondary">Dirección:</span>
                             <span id="info-dir"></span>
+                        </div>
+                        <div class="col-4 mt-1">
+                            <span class="text-secondary">Ciudad:</span>
+                            <span id="info-ciudad"></span>
                         </div>
                     </div>
                 </div>
@@ -270,6 +274,7 @@ async function seleccionarCliente(c) {
         document.getElementById('info-tel').textContent      = data.cliente?.telefono  ?? '—';
         document.getElementById('info-horario').textContent  = data.cliente?.horario   ?? '—';
         document.getElementById('info-dir').textContent      = data.cliente?.direccion ?? '—';
+        document.getElementById('info-ciudad').textContent   = data.cliente?.ciudad ?? '—';
         document.getElementById('bloque-cliente').classList.remove('d-none');
 
         // Poblar select de departamentos
