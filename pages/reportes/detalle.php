@@ -72,6 +72,10 @@ $bitacora = array_filter(
            class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-person me-1"></i> Ver Cliente
         </a>
+
+        <button type="button" class="btn btn-success me-2" onclick="compartirWhatsApp()">
+            <i class="bi bi-whatsapp me-1"></i> WhatsApp
+        </button>
     </div>
 </div>
 
@@ -630,6 +634,45 @@ async function finalizarConChecklist() {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Finalizar y mandar a notas';
     }
+}
+
+// ── Compartir en WhatsApp ──────────────────────────────────
+function compartirWhatsApp() {
+    // 1. Obtener los datos desde PHP formateados adecuadamente
+    const tecnico     = <?= json_encode($r['tecnico_nombre'] ?? 'Sin asignar') ?>;
+    const cliente     = <?= json_encode($r['razon'] ?? '—') ?>;
+    const direccion   = <?= json_encode($r['direccion'] ?? '—') ?>;
+    const departamento = <?= json_encode($r['departamento'] ?? '—') ?>;
+    const horario     = <?= json_encode($r['horario'] ?? '—') ?>;
+    const telefono    = <?= json_encode($r['telefono'] ?? '—') ?>;
+    
+    // Armamos el string del equipo (Marca Modelo, Serie)
+    const marcaModelo = <?= json_encode(trim(($r['marca'] ?? '') . ' ' . ($r['modelo'] ?? ''))) ?>;
+    const serie       = <?= json_encode($r['serie'] ?? '') ?>;
+    const equipo      = serie ? `${marcaModelo}, Serie: ${serie}` : marcaModelo;
+
+    const falla       = <?= json_encode($r['falla'] ?? '—') ?>;
+
+    // 2. Construir la plantilla con el mismo formato
+    const mensaje = 
+`*Ingeniero Asignado:* ${tecnico}
+
+*Info del Cliente*
+Nombre: ${cliente}
+Dirección: ${direccion}
+Departamento: ${departamento}
+Horario: ${horario}
+Teléfono: ${telefono}
+
+*Info del Equipo*
+${equipo}
+
+*Info del Problema*
+${falla}`;
+
+    // 3. Abrir la API de WhatsApp
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
 }
 </script>
 

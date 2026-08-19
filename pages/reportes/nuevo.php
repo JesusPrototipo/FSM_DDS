@@ -371,28 +371,6 @@ ${falla}`;
     window.open(url, '_blank');
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ── Guardar reporte ──────────────────────────────────────────
 async function guardarReporte() {
     const alerta = document.getElementById('alerta-global');
@@ -459,6 +437,7 @@ function mostrarAlerta(tipo, msg) {
     <?php endif; ?>
 })();
 <?php endif; ?>
+
 </script>
 
 <?php require_once INCLUDES . '/footer.php'; ?>
