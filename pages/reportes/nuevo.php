@@ -316,6 +316,83 @@ selDepto.addEventListener('change', () => {
     selEquipo.disabled = equipos.length === 0;
 });
 
+
+// ── Prueba Whats reporte ──────────────────────────────────────────
+
+
+function compartirWhatsApp() {
+    const selTecnico    = document.getElementById('tecnico_id');
+    const optionTecnico = selTecnico.options[selTecnico.selectedIndex];
+    
+    // Extraer nombre y teléfono
+    const nombreTecnico = optionTecnico ? optionTecnico.text : 'Sin asignar';
+    const telTecnico    = optionTecnico ? optionTecnico.getAttribute('data-tel') : '';
+
+    // Formatear mención (ejemplo: @521878xxxxxxx o @Nombre)
+    const mencionTecnico = telTecnico ? `@${telTecnico} (${nombreTecnico})` : `@${nombreTecnico}`;
+
+    const clienteNombre = document.getElementById('buscar-cliente').value || '—';
+    const direccion     = document.getElementById('info-dir').textContent || '—';
+    
+    const selDepto      = document.getElementById('departamento_id');
+    const departamento  = selDepto.options[selDepto.selectedIndex]?.text || '—';
+    
+    const horario       = document.getElementById('info-horario').textContent || '—';
+    const telefono      = document.getElementById('info-tel').textContent || '—';
+
+    const selEquipo     = document.getElementById('equipo_id');
+    const infoEquipo    = selEquipo.options[selEquipo.selectedIndex]?.text || '—';
+
+    const falla         = document.getElementById('falla').value.trim() || '—';
+
+    if (!clienteNombre || clienteNombre === '—') {
+        mostrarAlerta('warning', 'Selecciona un cliente antes de generar el mensaje.');
+        return;
+    }
+
+    // Plantilla con el formato exacto de WhatsApp
+    const mensaje = 
+`*Ingeniero Asignado:* ${mencionTecnico}
+
+*Info del Cliente*
+Nombre: ${clienteNombre}
+Dirección: ${direccion}
+Departamento: ${departamento}
+Horario: ${horario}
+Teléfono: ${telefono}
+
+*Info del Equipo*
+${infoEquipo}
+
+*Info del Problema*
+${falla}`;
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ── Guardar reporte ──────────────────────────────────────────
 async function guardarReporte() {
     const alerta = document.getElementById('alerta-global');

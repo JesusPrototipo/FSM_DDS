@@ -11,6 +11,7 @@
 //  Rutas POST:
 //    accion=crear                           → nuevo reporte
 //    accion=cambiar_estatus                 → pendiente/en proceso/finalizado/cancelado
+//                                              (acepta 'checklist' JSON opcional al finalizar)
 //    accion=agregar_nota                    → nota del técnico en bitácora
 // ============================================================
 
@@ -136,7 +137,7 @@ if ($method === 'POST') {
 
     // ── Crear reporte ────────────────────────────────────────
     if ($accion === 'crear') {
-        Auth::requerirRol([ROL_ADMIN, ROL_CALLCENTER, ROL_TECNICO]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_TECNICO, ROL_GERENCIA]);
 
         $clienteId     = (int)($_POST['cliente_id']      ?? 0);
         $deptoId       = (int)($_POST['departamento_id'] ?? 0);
@@ -173,13 +174,23 @@ if ($method === 'POST') {
     if ($accion === 'cambiar_estatus') {
         Auth::requerirRol([ROL_ADMIN, ROL_TECNICO]);
 
-        $id      = (int)($_POST['id']      ?? 0);
-        $estatus = trim($_POST['estatus'] ?? '');
-        $nota    = trim($_POST['nota']    ?? '');
+        $id        = (int)($_POST['id']      ?? 0);
+        $estatus   = trim($_POST['estatus'] ?? '');
+        $nota      = trim($_POST['nota']    ?? '');
+        $checklist = $_POST['checklist']    ?? null; // JSON, solo viene al finalizar
 
         $permitidos = ['pendiente', 'en proceso', 'finalizado', 'cancelado'];
         if (!$id || !in_array($estatus, $permitidos, true)) {
             jsonResponse(['error' => 'Datos inválidos.'], 422);
+        }
+
+        // Validar que el checklist sea JSON válido antes de guardarlo
+        $checklistValido = null;
+        if ($checklist) {
+            json_decode($checklist, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $checklistValido = $checklist;
+            }
         }
 
         // Guardar estatus + concatenar nota en observaciones con timestamp
@@ -191,21 +202,23 @@ if ($method === 'POST') {
             "UPDATE reportes_fallas
              SET estatus = :estatus,
                  observaciones = CONCAT(IFNULL(observaciones,''), '\n', :entrada),
-                 tecnico_id    = COALESCE(tecnico_id, :uid)
+                 tecnico_id    = COALESCE(tecnico_id, :uid),
+                 checklist_finalizacion = COALESCE(:checklist, checklist_finalizacion)
              WHERE id = :id"
         );
         $stmt->execute([
-            ':estatus' => $estatus,
-            ':entrada' => $entrada,
-            ':uid'     => $usuario['id'],
-            ':id'      => $id,
+            ':estatus'   => $estatus,
+            ':entrada'   => $entrada,
+            ':uid'       => $usuario['id'],
+            ':checklist' => $checklistValido,
+            ':id'        => $id,
         ]);
         jsonResponse(['ok' => true]);
     }
 
     // ── Agregar nota del técnico ─────────────────────────────
     if ($accion === 'agregar_nota') {
-        Auth::requerirRol([ROL_ADMIN, ROL_TECNICO, ROL_CALLCENTER]);
+        Auth::requerirRol([ROL_ADMIN, ROL_TECNICO, ROL_ADMINISTRATIVO, ROL_GERENCIA]);
 
         $id   = (int)($_POST['id']   ?? 0);
         $nota = trim($_POST['nota'] ?? '');

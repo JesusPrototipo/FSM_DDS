@@ -151,7 +151,7 @@ if ($method === 'POST') {
 
     // ── Crear cliente ────────────────────────────────────────
     if ($accion === 'crear_cliente') {
-        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR, ROL_TECNICO]);
 
         $campos = ['razon','reporto','direccion','ciudad','telefono','horario'];
         $datos  = [];
@@ -188,7 +188,7 @@ if ($method === 'POST') {
 
     // ── Crear departamento ───────────────────────────────────
     if ($accion === 'crear_depto') {
-        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR, ROL_TECNICO]);
 
         $clienteId   = (int)($_POST['cliente_id']   ?? 0);
         $departamento = trim($_POST['departamento'] ?? '');
@@ -220,7 +220,7 @@ if ($method === 'POST') {
 
     // ── Crear equipo / impresora ─────────────────────────────
     if ($accion === 'crear_equipo') {
-        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR, ROL_TECNICO]);
 
         $deptoId   = (int)($_POST['departamento_id'] ?? 0);
         $clienteId = (int)($_POST['cliente_id']      ?? 0);
@@ -258,7 +258,7 @@ if ($method === 'POST') {
 
     // ── Actualizar departamento ─────────────────────────────
     if ($accion === 'actualizar_depto') {
-        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR, ROL_TECNICO]);
 
         $id           = (int)($_POST['id']           ?? 0);
         $departamento = trim($_POST['departamento']  ?? '');
@@ -288,7 +288,7 @@ if ($method === 'POST') {
 
     // ── Actualizar cliente ───────────────────────────────────
     if ($accion === 'actualizar_cliente') {
-        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR, ROL_TECNICO]);
 
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) jsonResponse(['error' => 'ID inválido.'], 400);

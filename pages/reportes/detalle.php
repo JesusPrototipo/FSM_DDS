@@ -177,7 +177,7 @@ $bitacora = array_filter(
                 </ul>
                 <?php endif; ?>
             </div>
-            <?php if (Auth::tieneRol(ROL_ADMIN, ROL_TECNICO, ROL_CALLCENTER)): ?>
+            <?php if (Auth::tieneRol(ROL_ADMIN, ROL_TECNICO, ROL_ADMINISTRATIVO, ROL_GERENCIA)): ?>
             <div class="card-footer">
                 <label class="form-label small text-secondary mb-1">Agregar nota</label>
                 <div class="input-group">
@@ -210,11 +210,12 @@ $bitacora = array_filter(
                         'finalizado' => ['Marcar Finalizado', 'bi-check-circle',         'btn-success'],
                         'cancelado'  => ['Cancelar Reporte',  'bi-x-circle',             'btn-outline-danger'],
                     ] as $est => [$label, $icon, $cls]):
-                        $activo = $r['estatus'] === $est;
+                        $activo  = $r['estatus'] === $est;
+                        $onclick = $est === 'finalizado' ? 'abrirModalFinalizar()' : "cambiarEstatus('{$est}')";
                     ?>
                     <button class="btn <?= $cls ?> <?= $activo ? 'active' : '' ?>"
                             <?= $activo ? 'disabled' : '' ?>
-                            onclick="cambiarEstatus('<?= $est ?>')">
+                            onclick="<?= $onclick ?>">
                         <i class="bi <?= $icon ?> me-1"></i><?= $label ?>
                         <?= $activo ? '<i class="bi bi-check ms-1"></i>' : '' ?>
                     </button>
@@ -225,6 +226,9 @@ $bitacora = array_filter(
                     <textarea id="nota-estatus" class="form-control form-control-sm"
                               rows="2"
                               placeholder="Opcional: describe el motivo…"></textarea>
+                    <div class="form-text">
+                        Esta nota no aplica al marcar "Finalizado" — ese estatus usa el cuestionario emergente.
+                    </div>
                 </div>
             </div>
         </div>
@@ -280,6 +284,163 @@ $bitacora = array_filter(
     </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════
+     Modal: Cuestionario de Finalización
+     ══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalFinalizar" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-clipboard-check me-1"></i> Detalle de Servicio Realizado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="error-finalizar" class="alert alert-danger d-none"></div>
+
+        <!-- Aspirado -->
+        <div class="mb-3 pb-2 border-bottom">
+          <label class="form-label fw-semibold">¿Se aspiró la impresora?</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="aspirado" value="si" id="asp-si">
+              <label class="form-check-label" for="asp-si">Sí</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="aspirado" value="no" id="asp-no">
+              <label class="form-check-label" for="asp-no">No</label>
+            </div>
+          </div>
+          <input type="text" class="form-control form-control-sm mt-2 d-none" id="aspirado-nota" placeholder="¿Por qué? (opcional)">
+        </div>
+
+        <!-- Sensores -->
+        <div class="mb-3 pb-2 border-bottom">
+          <label class="form-label fw-semibold">¿Se limpiaron sensores?</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="sensores" value="si" id="sen-si">
+              <label class="form-check-label" for="sen-si">Sí</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="sensores" value="no" id="sen-no">
+              <label class="form-check-label" for="sen-no">No</label>
+            </div>
+          </div>
+          <input type="text" class="form-control form-control-sm mt-2 d-none" id="sensores-nota" placeholder="¿Por qué? (opcional)">
+        </div>
+
+        <!-- Rodillos / Alimentadores -->
+        <div class="mb-3 pb-2 border-bottom">
+          <label class="form-label fw-semibold">¿Se limpiaron rodillos y/o alimentadores?</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="rodillos" value="si" id="rod-si">
+              <label class="form-check-label" for="rod-si">Sí</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="rodillos" value="no" id="rod-no">
+              <label class="form-check-label" for="rod-no">No</label>
+            </div>
+          </div>
+          <input type="text" class="form-control form-control-sm mt-2 d-none" id="rodillos-cuantos" placeholder="¿Cuántos?">
+          <input type="text" class="form-control form-control-sm mt-2 d-none" id="rodillos-nota" placeholder="¿Por qué? (opcional)">
+        </div>
+
+        <!-- ADF -->
+        <div class="mb-3 pb-2 border-bottom">
+          <label class="form-label fw-semibold">¿Se realizó limpieza del ADF?</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="ado" value="si" id="ado-si">
+              <label class="form-check-label" for="ado-si">Sí</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="ado" value="no" id="ado-no">
+              <label class="form-check-label" for="ado-no">No</label>
+            </div>
+          </div>
+          <input type="text" class="form-control form-control-sm mt-2 d-none" id="ado-nota" placeholder="¿Por qué? (opcional)">
+        </div>
+
+        <!-- Limpieza externa -->
+        <div class="mb-3 pb-2 border-bottom">
+          <label class="form-label fw-semibold">¿Se dio limpieza externa?</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="limpieza_externa" value="si" id="ext-si">
+              <label class="form-check-label" for="ext-si">Sí</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="limpieza_externa" value="no" id="ext-no">
+              <label class="form-check-label" for="ext-no">No</label>
+            </div>
+          </div>
+          <input type="text" class="form-control form-control-sm mt-2 d-none" id="limpieza_externa-nota" placeholder="¿Por qué? (opcional)">
+        </div>
+
+        <!-- Consumibles -->
+        <div class="mb-3 pb-2 border-bottom">
+          <label class="form-label fw-semibold">¿La impresora requiere consumibles?</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="consumibles" value="si" id="cons-si">
+              <label class="form-check-label" for="cons-si">Sí</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="consumibles" value="no" id="cons-no">
+              <label class="form-check-label" for="cons-no">No</label>
+            </div>
+          </div>
+          <input type="text" class="form-control form-control-sm mt-2 d-none" id="consumibles-cuales" placeholder="¿Cuáles?">
+          <input type="text" class="form-control form-control-sm mt-2 d-none" id="consumibles-nota" placeholder="Comentario (opcional)">
+        </div>
+
+        <!-- Equipo funcionando -->
+        <div class="mb-3 pb-2 border-bottom">
+          <label class="form-label fw-semibold">¿El equipo quedó funcionando?</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="funciona" value="si" id="fun-si">
+              <label class="form-check-label" for="fun-si">Sí</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="funciona" value="no" id="fun-no">
+              <label class="form-check-label" for="fun-no">No</label>
+            </div>
+          </div>
+          <div id="fun-requiere-wrap" class="d-none mt-2 ps-3 border-start">
+            <label class="form-label small">¿Qué requiere?</label>
+            <div class="d-flex gap-3 mb-2">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="requiere" value="consumibles" id="req-cons">
+                <label class="form-check-label" for="req-cons">Consumibles</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="requiere" value="piezas" id="req-piezas">
+                <label class="form-check-label" for="req-piezas">Piezas</label>
+              </div>
+            </div>
+            <input type="text" class="form-control form-control-sm d-none" id="requiere-consumible-cual" placeholder="¿Qué consumible?">
+            <input type="text" class="form-control form-control-sm d-none" id="requiere-pieza-cual" placeholder="¿Qué pieza?">
+          </div>
+        </div>
+
+        <!-- Nota libre -->
+        <div class="mb-2">
+          <label class="form-label fw-semibold">Nota adicional (opcional)</label>
+          <textarea class="form-control form-control-sm" id="nota-libre" rows="2" placeholder="Cualquier otro detalle…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" id="btn-finalizar-check" onclick="finalizarConChecklist()">
+          <i class="bi bi-check-circle me-1"></i> Finalizar y mandar a notas
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const API_REP = '<?= BASE_PATH ?>/api/reportes.php';
 const REP_ID  = <?= $id ?>;
@@ -331,6 +492,144 @@ async function reasignarTecnico() {
         mostrarAlerta('success', 'Técnico reasignado correctamente.');
         setTimeout(() => location.reload(), 1000);
     } catch(e) { mostrarAlerta('danger', e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Cuestionario de finalización
+// ══════════════════════════════════════════════════════════════
+
+function setupToggle(name, mapping) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+        radio.addEventListener('change', function() {
+            Object.keys(mapping).forEach(val => {
+                mapping[val].forEach(id => {
+                    document.getElementById(id).classList.toggle('d-none', this.value !== val);
+                });
+            });
+        });
+    });
+}
+setupToggle('aspirado',         { no: ['aspirado-nota'] });
+setupToggle('sensores',         { no: ['sensores-nota'] });
+setupToggle('rodillos',         { si: ['rodillos-cuantos'], no: ['rodillos-nota'] });
+setupToggle('ado',              { no: ['ado-nota'] });
+setupToggle('limpieza_externa', { no: ['limpieza_externa-nota'] });
+setupToggle('consumibles',      { si: ['consumibles-cuales'], no: ['consumibles-nota'] });
+setupToggle('funciona',         { no: ['fun-requiere-wrap'] });
+setupToggle('requiere',         { consumibles: ['requiere-consumible-cual'], piezas: ['requiere-pieza-cual'] });
+
+const CAMPOS_TEXTO_MODAL = [
+    'aspirado-nota','sensores-nota','rodillos-cuantos','rodillos-nota','ado-nota',
+    'limpieza_externa-nota','consumibles-cuales','consumibles-nota',
+    'requiere-consumible-cual','requiere-pieza-cual','nota-libre'
+];
+
+function abrirModalFinalizar() {
+    document.getElementById('error-finalizar').classList.add('d-none');
+    document.querySelectorAll('#modalFinalizar input[type=radio]').forEach(r => r.checked = false);
+    CAMPOS_TEXTO_MODAL.forEach(id => document.getElementById(id).value = '');
+    CAMPOS_TEXTO_MODAL.concat(['fun-requiere-wrap']).forEach(id => document.getElementById(id).classList.add('d-none'));
+    new bootstrap.Modal(document.getElementById('modalFinalizar')).show();
+}
+
+function radioVal(name) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : null;
+}
+function txt(id) { return document.getElementById(id).value.trim(); }
+
+async function finalizarConChecklist() {
+    const errEl = document.getElementById('error-finalizar');
+    errEl.classList.add('d-none');
+
+    const preguntas = [
+        ['aspirado', '¿Se aspiró la impresora?'],
+        ['sensores', '¿Se limpiaron sensores?'],
+        ['rodillos', '¿Se limpiaron rodillos y/o alimentadores?'],
+        ['ado', '¿Se realizó limpieza del ADF?'],
+        ['limpieza_externa', '¿Se dio limpieza externa?'],
+        ['consumibles', '¿La impresora requiere consumibles?'],
+        ['funciona', '¿El equipo quedó funcionando?'],
+    ];
+    const datos = {};
+    for (const [name, label] of preguntas) {
+        const v = radioVal(name);
+        if (!v) { errEl.textContent = `Responde: "${label}"`; errEl.classList.remove('d-none'); return; }
+        datos[name] = v;
+    }
+    if (datos.rodillos === 'si' && !txt('rodillos-cuantos')) {
+        errEl.textContent = 'Indica cuántos rodillos/alimentadores se limpiaron.'; errEl.classList.remove('d-none'); return;
+    }
+    if (datos.consumibles === 'si' && !txt('consumibles-cuales')) {
+        errEl.textContent = 'Indica qué consumibles requiere.'; errEl.classList.remove('d-none'); return;
+    }
+    let requiere = null;
+    if (datos.funciona === 'no') {
+        requiere = radioVal('requiere');
+        if (!requiere) { errEl.textContent = 'Indica qué requiere el equipo.'; errEl.classList.remove('d-none'); return; }
+        if (requiere === 'consumibles' && !txt('requiere-consumible-cual')) {
+            errEl.textContent = 'Indica qué consumible requiere.'; errEl.classList.remove('d-none'); return;
+        }
+        if (requiere === 'piezas' && !txt('requiere-pieza-cual')) {
+            errEl.textContent = 'Indica qué pieza requiere.'; errEl.classList.remove('d-none'); return;
+        }
+    }
+
+    const checklist = {
+        aspirado: { valor: datos.aspirado, nota: txt('aspirado-nota') || null },
+        sensores: { valor: datos.sensores, nota: txt('sensores-nota') || null },
+        rodillos: { valor: datos.rodillos, cuantos: txt('rodillos-cuantos') || null, nota: txt('rodillos-nota') || null },
+        ado: { valor: datos.ado, nota: txt('ado-nota') || null },
+        limpieza_externa: { valor: datos.limpieza_externa, nota: txt('limpieza_externa-nota') || null },
+        consumibles: { valor: datos.consumibles, cuales: txt('consumibles-cuales') || null, nota: txt('consumibles-nota') || null },
+        funciona: {
+            valor: datos.funciona, requiere,
+            consumible_cual: requiere === 'consumibles' ? txt('requiere-consumible-cual') : null,
+            pieza_cual: requiere === 'piezas' ? txt('requiere-pieza-cual') : null,
+        },
+        nota_libre: txt('nota-libre') || null,
+    };
+
+    const lineas = [
+        `Aspirado: ${datos.aspirado.toUpperCase()}${checklist.aspirado.nota ? ' — ' + checklist.aspirado.nota : ''}`,
+        `Sensores: ${datos.sensores.toUpperCase()}${checklist.sensores.nota ? ' — ' + checklist.sensores.nota : ''}`,
+        `Rodillos/Alimentadores: ${datos.rodillos.toUpperCase()}${datos.rodillos === 'si' ? ' (Cantidad: ' + checklist.rodillos.cuantos + ')' : (checklist.rodillos.nota ? ' — ' + checklist.rodillos.nota : '')}`,
+        `Limpieza ADF: ${datos.ado.toUpperCase()}${checklist.ado.nota ? ' — ' + checklist.ado.nota : ''}`,
+        `Limpieza externa: ${datos.limpieza_externa.toUpperCase()}${checklist.limpieza_externa.nota ? ' — ' + checklist.limpieza_externa.nota : ''}`,
+        `Requiere consumibles: ${datos.consumibles.toUpperCase()}${datos.consumibles === 'si' ? ' (Cuáles: ' + checklist.consumibles.cuales + ')' : (checklist.consumibles.nota ? ' — ' + checklist.consumibles.nota : '')}`,
+    ];
+    if (datos.funciona === 'si') {
+        lineas.push('Equipo funcionando: SÍ');
+    } else {
+        const reqTxt = requiere === 'consumibles' ? `Consumibles (${checklist.funciona.consumible_cual})` : `Piezas (${checklist.funciona.pieza_cual})`;
+        lineas.push(`Equipo funcionando: NO — Requiere: ${reqTxt}`);
+    }
+    if (checklist.nota_libre) lineas.push(`Nota adicional: ${checklist.nota_libre}`);
+
+    const notaTexto = 'CHECKLIST DE FINALIZACIÓN:\n' + lineas.map(l => '• ' + l).join('\n');
+
+    const btn = document.getElementById('btn-finalizar-check');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Guardando…';
+
+    try {
+        await post({
+            accion: 'cambiar_estatus',
+            id: REP_ID,
+            estatus: 'finalizado',
+            nota: notaTexto,
+            checklist: JSON.stringify(checklist),
+        });
+        bootstrap.Modal.getInstance(document.getElementById('modalFinalizar')).hide();
+        mostrarAlerta('success', 'Reporte finalizado correctamente.');
+        setTimeout(() => location.reload(), 1200);
+    } catch(e) {
+        errEl.textContent = e.message;
+        errEl.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Finalizar y mandar a notas';
+    }
 }
 </script>
 
