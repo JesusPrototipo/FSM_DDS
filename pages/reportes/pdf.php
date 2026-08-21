@@ -18,7 +18,7 @@ if (!$id) {
 $pdo  = Database::get();
 $stmt = $pdo->prepare(
     "SELECT r.*,
-            c.razon, c.reporto AS contacto, c.telefono, c.direccion, c.horario,
+            c.razon, c.reporto AS contacto, c.telefono,c.ciudad, c.direccion, c.horario,
             d.departamento,
             i.marca, i.modelo, i.serie, i.status AS equipo_status,
             u.nombre AS tecnico_nombre
@@ -162,8 +162,7 @@ $equipoStatus = $r['equipo_status'] ?? '';
       <td class="lbl">Actividad</td>
           <td>
             <?php foreach (['Instalacion','Mantenimiento','Conexion','Asesoria','Revision'] as $v): ?>
-              <span style="<?= $tservicio === $v ? 'font-weight:bold;text-decoration:underline;' : 'color:#999;' ?>
-                            margin-right:6px; font-size:7.5pt;">
+              <span style="<?= $tservicio === $v ? 'font-weight:bold;text-decoration:underline;' : 'color:#999;' ?> margin-right:6px; font-size:7.5pt;">
                 <?= $activitiMap[$v] ?>
               </span>
             <?php endforeach; ?>
@@ -178,7 +177,7 @@ $equipoStatus = $r['equipo_status'] ?? '';
   </table>
 
   <!-- ── Cliente y Tiempos ─────────────────────────────────── -->
-  <table style="margin-bottom:-1px;">
+  <table style="margin-bottom:0px;">
     <tr>
       <th colspan="2" style="width:61.7%;">INFORMACIÓN DEL CLIENTE</th>
       <th colspan="2" style="width:45%;">INFORMACIÓN DEL EQUIPO</th>
@@ -207,32 +206,24 @@ $equipoStatus = $r['equipo_status'] ?? '';
       <td class="lbl">Estatus</td>
       <td>
         <?php foreach (['Renta','Propio','Poliza','Garantia','Otras'] as $s): ?>
-          <span style="<?= $equipoStatus === $s ? 'font-weight:bold;text-decoration:underline;' : 'color:#999;' ?>
-                        margin-right:6px; font-size:7.5pt;">
+          <span style="<?= ($equipoStatus === $s ? 'font-weight:bold;text-decoration:underline;' : 'color:#999;') ?> margin-right:6px; font-size:7.5pt;">
             <?= $statusMap[$s] ?>
           </span>
         <?php endforeach; ?>
       </td>
     </tr>
-
-    
-    
-    <tr>
-      <td class="lbl">Departamento</td>
-      <td><?= e($r['departamento']) ?></td>
-      <td class="lbl">Horario</td>
-      <td style="width:190px;"><?= e($r['horario']) ?></td>
-
-    </tr>
   </table>
 
   <table style="margin-bottom:20px;">
     <tr>
-      <td class="lbl" style="width:11.5%;">Departamento</td>
-      <td style="width:5px;"><?= e($r['departamento']) ?></td>
+      <td class="lbl">Departamento</td>
+      <td style="width:150px;"><?= e($r['departamento']) ?></td>
+
+      <td class="lbl" style="width:5%;">Ciudad</td>
+      <td style="width:70px;"><?= e($r['ciudad']) ?></td>
+
       <td class="lbl">Horario</td>
-      <td style="width:190px;"><?= e($r['horario']) ?></td>
-      
+      <td style="width:190px;"><?= e($r['horario']) ?></td>      
     </tr>
   </table>
 

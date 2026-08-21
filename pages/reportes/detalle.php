@@ -201,7 +201,7 @@ $bitacora = array_filter(
     <!-- ── Columna derecha: acciones ────────────────────────── -->
     <div class="col-lg-4">
 
-        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_TECNICO)): ?>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_TECNICO, ROL_ADMINISTRATIVO, ROL_GERENCIA)): ?>
         <div class="card mb-3">
             <div class="card-header">
                 <i class="bi bi-arrow-repeat me-1"></i> Cambiar Estatus
@@ -238,7 +238,7 @@ $bitacora = array_filter(
         </div>
         <?php endif; ?>
 
-        <?php if (Auth::tieneRol(ROL_ADMIN)): ?>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA)): ?>
         <div class="card mb-3">
             <div class="card-header">
                 <i class="bi bi-person-badge me-1"></i> Reasignar Técnico

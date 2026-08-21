@@ -16,7 +16,7 @@ $pdo = Database::get();
 
 // Técnicos para el select
 $tecnicos = $pdo->query(
-    "SELECT id, nombre FROM usuarios WHERE activo=1 AND rol IN ('admin','tecnico') ORDER BY nombre"
+    "SELECT id, nombre FROM usuarios WHERE activo=1 AND rol IN ('tecnico') ORDER BY nombre"
 )->fetchAll();
 
 // Precarga si viene cliente_id o equipo_id desde detalle de cliente
@@ -161,14 +161,19 @@ if ($preClienteId) {
             </div>
 
         </div>
-    </div>
+    </div>    
     <div class="card-footer d-flex justify-content-between">
         <a href="<?= BASE_PATH ?>/pages/reportes/lista.php" class="btn btn-outline-secondary">
             Cancelar
         </a>
-        <button class="btn btn-primary" id="btn-guardar" onclick="guardarReporte()">
-            <i class="bi bi-check-circle me-1"></i> Crear Reporte
-        </button>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success" id="btn-guardar-whatsapp" onclick="guardarReporte(true)">
+                <i class="bi bi-whatsapp me-1"></i> Enviar y Crear Reporte
+            </button>
+            <button class="btn btn-primary" id="btn-guardar" onclick="guardarReporte(false)">
+                <i class="bi bi-check-circle me-1"></i> Crear Reporte
+            </button>
+        </div>
     </div>
 </div>
 
@@ -372,7 +377,9 @@ ${falla}`;
 }
 
 // ── Guardar reporte ──────────────────────────────────────────
-async function guardarReporte() {
+// enviarWhatsApp = true  → guarda, abre WhatsApp con la plantilla y luego redirige al detalle
+// enviarWhatsApp = false → guarda y redirige directo al detalle (comportamiento original)
+async function guardarReporte(enviarWhatsApp = false) {
     const alerta = document.getElementById('alerta-global');
     alerta.className = 'alert d-none';
 
@@ -386,8 +393,16 @@ async function guardarReporte() {
     if (!equipoId)  return mostrarAlerta('danger', 'Selecciona el equipo.');
     if (!falla)     return mostrarAlerta('danger', 'Describe la falla reportada.');
 
-    const btn = document.getElementById('btn-guardar');
-    btn.disabled = true;
+    const btn = enviarWhatsApp
+        ? document.getElementById('btn-guardar-whatsapp')
+        : document.getElementById('btn-guardar');
+    const btnOtro = enviarWhatsApp
+        ? document.getElementById('btn-guardar')
+        : document.getElementById('btn-guardar-whatsapp');
+
+    const htmlOriginal = btn.innerHTML;
+    btn.disabled    = true;
+    btnOtro.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Guardando…';
 
     const form = new FormData();
@@ -405,13 +420,22 @@ async function guardarReporte() {
         const data = await res.json();
         if (!res.ok) return mostrarAlerta('danger', data.error || 'Error al crear el reporte.');
 
-        // Redirigir al detalle del reporte recién creado
-        window.location.href = '<?= BASE_PATH ?>/pages/reportes/detalle.php?id=' + data.id;
+        if (enviarWhatsApp) {
+            // Abre WhatsApp con la plantilla usando los datos ya cargados en el formulario
+            compartirWhatsApp();
+            // Pequeño delay para que la pestaña de WhatsApp alcance a abrirse antes de navegar
+            setTimeout(() => {
+                window.location.href = '<?= BASE_PATH ?>/pages/reportes/detalle.php?id=' + data.id;
+            }, 600);
+        } else {
+            window.location.href = '<?= BASE_PATH ?>/pages/reportes/detalle.php?id=' + data.id;
+        }
     } catch(e) {
         mostrarAlerta('danger', 'Error de conexión con el servidor.');
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Crear Reporte';
+        btn.disabled    = false;
+        btnOtro.disabled = false;
+        btn.innerHTML = htmlOriginal;
     }
 }
 

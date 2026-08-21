@@ -172,7 +172,7 @@ if ($method === 'POST') {
 
     // ── Cambiar estatus ──────────────────────────────────────
     if ($accion === 'cambiar_estatus') {
-        Auth::requerirRol([ROL_ADMIN, ROL_TECNICO]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA,ROL_TECNICO]);
 
         $id        = (int)($_POST['id']      ?? 0);
         $estatus   = trim($_POST['estatus'] ?? '');
@@ -240,7 +240,7 @@ if ($method === 'POST') {
 
     // ── Reasignar técnico ────────────────────────────────────
     if ($accion === 'reasignar_tecnico') {
-        Auth::requerirRol([ROL_ADMIN]);
+        Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA]);
 
         $id        = (int)($_POST['id']         ?? 0);
         $tecnicoId = (int)($_POST['tecnico_id'] ?? 0) ?: null;

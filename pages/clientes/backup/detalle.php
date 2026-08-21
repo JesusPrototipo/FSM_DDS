@@ -69,24 +69,19 @@ $stmt = $pdo->prepare(
 $stmt->execute([':id' => $id]);
 $reportes = $stmt->fetchAll();
 
+// Ciudades existentes (para el select de Ciudad en la vista de edición)
+$ciudadesExistentes = $pdo->query(
+    "SELECT DISTINCT ciudad FROM clientes
+     WHERE ciudad IS NOT NULL AND ciudad <> ''
+     ORDER BY ciudad"
+)->fetchAll(PDO::FETCH_COLUMN);
+
 $badgeClass = [
     'pendiente'  => 'badge-pendiente',
     'en proceso' => 'badge-en-proceso',
     'finalizado' => 'badge-finalizado',
     'cancelado'  => 'badge-cancelado',
 ];
-
-// Colores de status para equipos (Renta / Propio / Póliza / Garantía / Otras)
-$statusEquipoClass = [
-    'Renta'    => 'badge-status-renta',
-    'Propio'   => 'badge-status-propio',
-    'Poliza'   => 'badge-status-poliza',
-    'Garantia' => 'badge-status-garantia',
-    'Otras'    => 'badge-status-otras',
-];
-
-// Total de equipos del cliente (para el contador del header)
-$totalEquiposCliente = array_sum(array_map(fn($d) => count($d['equipos']), $deptos));
 ?>
 
 <!-- Botones de acción superiores -->
@@ -95,13 +90,13 @@ $totalEquiposCliente = array_sum(array_map(fn($d) => count($d['equipos']), $dept
         <i class="bi bi-arrow-left me-1"></i> Regresar
     </a>
     <div class="d-flex gap-2">
-        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_TECNICO)): ?>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_TECNICO, ROL_GERENCIA)): ?>
         <a href="<?= BASE_PATH ?>/pages/reportes/nuevo.php?cliente_id=<?= $id ?>"
            class="btn btn-primary btn-sm">
             <i class="bi bi-plus-circle me-1"></i> Nuevo Reporte
         </a>
         <?php endif; ?>
-        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_TECNICO)): ?>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_VENDEDOR, ROL_ADMINISTRATIVO, ROL_GERENCIA)): ?>
         <button class="btn btn-outline-warning btn-sm" onclick="abrirEdicion()">
             <i class="bi bi-pencil me-1"></i> Editar
         </button>
@@ -163,8 +158,18 @@ $totalEquiposCliente = array_sum(array_map(fn($d) => count($d['equipos']), $dept
                 </div>
                 <div class="col-md-4">
                     <label class="form-label form-label-sm">Ciudad</label>
-                    <input type="text" class="form-control form-control-sm" id="edit-ciudad"
-                           value="<?= e($cliente['ciudad']) ?>">
+                    <select class="form-select form-select-sm" id="edit-ciudad-select">
+                        <option value="">— Selecciona una ciudad —</option>
+                        <?php foreach ($ciudadesExistentes as $c): ?>
+                        <option value="<?= e($c) ?>"
+                            <?= $cliente['ciudad'] === $c ? 'selected' : '' ?>>
+                            <?= e($c) ?>
+                        </option>
+                        <?php endforeach; ?>
+                        <option value="__nueva__">+ Agregar nueva ciudad…</option>
+                    </select>
+                    <input type="text" class="form-control form-control-sm mt-2 d-none"
+                           id="edit-ciudad-nueva" placeholder="Escribe el nombre de la nueva ciudad">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label form-label-sm">Teléfono</label>
@@ -190,160 +195,90 @@ $totalEquiposCliente = array_sum(array_map(fn($d) => count($d['equipos']), $dept
 </div>
 
 <!-- ── Departamentos y equipos ───────────────────────────── -->
-<style>
-    /* Tarjetas de departamento */
-    .depto-card {
-        background: rgba(255,255,255,.02);
-        border-color: var(--bs-border-color) !important;
-        overflow: hidden;
-        transition: border-color .15s ease;
-    }
-    .depto-card:hover {
-        border-color: rgba(255,255,255,.25) !important;
-    }
-    .depto-card-header {
-        background: rgba(255,255,255,.04);
-        border-bottom: 1px solid var(--bs-border-color);
-    }
-    .equipo-item {
-        background: rgba(255,255,255,.025);
-        border: 1px solid transparent;
-        transition: background .15s ease, border-color .15s ease;
-    }
-    .equipo-item:hover {
-        background: rgba(255,255,255,.06);
-        border-color: rgba(255,255,255,.12);
-    }
-    .equipo-icon {
-        width: 34px;
-        height: 34px;
-        min-width: 34px;
-        border-radius: .5rem;
-        background: rgba(255,255,255,.06);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    /* Badges de status de equipo (contraste sobre tema oscuro) */
-    .badge-status-renta    { background-color: #0d6efd; color: #fff; }
-    .badge-status-propio   { background-color: #198754; color: #fff; }
-    .badge-status-poliza   { background-color: #0dcaf0; color: #000; }
-    .badge-status-garantia { background-color: #ffc107; color: #000; }
-    .badge-status-otras    { background-color: #6c757d; color: #fff; }
-
-    #buscar-equipos:disabled { cursor: not-allowed; }
-</style>
-
 <div class="card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-building me-1"></i> Departamentos y Equipos</span>
-        <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-secondary">
-                <?= count($deptos) ?> depto<?= count($deptos) !== 1 ? 's' : '' ?>
-                · <?= $totalEquiposCliente ?> equipo<?= $totalEquiposCliente !== 1 ? 's' : '' ?>
-            </span>
-            <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_TECNICO)): ?>
-            <a href="<?= BASE_PATH ?>/pages/clientes/agregar_depto.php?cliente_id=<?= $id ?>"
-               class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-plus-lg me-1"></i> Agregar
-            </a>
-            <?php endif; ?>
-        </div>
+        <?php if (Auth::tieneRol(ROL_ADMIN, ROL_VENDEDOR, ROL_ADMINISTRATIVO, ROL_GERENCIA)): ?>
+        <a href="<?= BASE_PATH ?>/pages/clientes/agregar_depto.php?cliente_id=<?= $id ?>"
+           class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-plus"></i> Agregar
+        </a>
+        <?php endif; ?>
     </div>
-
-    <?php if (!empty($deptos)): ?>
-    <div class="card-body pb-0">
-        <input type="text" id="buscar-equipos" class="form-control form-control-sm"
-               placeholder="Filtrar por marca, modelo, serie o departamento…"
-               <?= $totalEquiposCliente === 0 ? 'disabled' : '' ?>>
-    </div>
-    <?php endif; ?>
-
-    <div class="card-body">
+    <div class="card-body p-0">
         <?php if (empty($deptos)): ?>
-        <div class="text-center text-secondary py-4">
-            <i class="bi bi-building fs-1 d-block mb-2 opacity-50"></i>
+        <p class="text-secondary text-center py-3 mb-0">
             Sin departamentos registrados.
-        </div>
+        </p>
         <?php else: ?>
-        <div class="row g-3" id="grid-deptos">
+        <div class="accordion accordion-flush" id="accordionDeptos">
             <?php foreach ($deptos as $d): ?>
-            <div class="col-md-6 depto-col" data-depto-nombre="<?= e(mb_strtolower($d['nombre'])) ?>">
-                <div class="depto-card border rounded-3 h-100">
-                    <div class="depto-card-header d-flex justify-content-between align-items-center px-3 py-2">
-                        <div class="d-flex align-items-center gap-2 text-truncate">
-                            <i class="bi bi-building text-primary"></i>
-                            <span class="fw-semibold text-truncate" id="nombre-depto-<?= $d['id'] ?>">
-                                <?= e($d['nombre']) ?>
-                            </span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary">
-                                <?= count($d['equipos']) ?> equipo<?= count($d['equipos']) !== 1 ? 's' : '' ?>
-                            </span>
-                            <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_TECNICO)): ?>
-                            <button class="btn btn-sm btn-outline-warning border-0 py-0 px-1"
-                                    title="Editar nombre del departamento"
-                                    onclick="abrirEditarDepto(<?= $d['id'] ?>, '<?= e($d['nombre']) ?>')">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <div class="depto-card-body p-2">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#depto-<?= $d['id'] ?>">
+                        <i class="bi bi-building me-2 text-secondary"></i>
+                        <span id="nombre-depto-<?= $d['id'] ?>"><?= e($d['nombre']) ?></span>
+                        <span class="badge bg-secondary ms-2">
+                            <?= count($d['equipos']) ?> equipo<?= count($d['equipos']) !== 1 ? 's' : '' ?>
+                        </span>
+                    </button>
+                    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_VENDEDOR, ROL_GERENCIA)): ?>
+                    <button class="btn btn-sm btn-outline-warning ms-2 me-3"
+                            style="z-index:10; position:relative;"
+                            title="Editar nombre del departamento"
+                            onclick="abrirEditarDepto(<?= $d['id'] ?>, '<?= e($d['nombre']) ?>'); event.stopPropagation();">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <?php endif; ?>
+                </h2>
+                <div id="depto-<?= $d['id'] ?>" class="accordion-collapse collapse">
+                    <div class="accordion-body p-0">
                         <?php if (empty($d['equipos'])): ?>
-                        <div class="text-center text-secondary py-3">
-                            <i class="bi bi-printer d-block fs-4 mb-1 opacity-50"></i>
-                            <span class="small">Sin equipos en este departamento.</span>
-                        </div>
+                        <p class="text-secondary small text-center py-2 mb-0">Sin equipos.</p>
                         <?php else: ?>
-                        <div class="d-flex flex-column gap-2">
-                            <?php foreach ($d['equipos'] as $eq):
-                                $statusCls = $statusEquipoClass[$eq['status']] ?? 'bg-secondary';
-                            ?>
-                            <div class="equipo-item d-flex align-items-center justify-content-between rounded-3 px-2 py-2"
-                                 data-equipo-texto="<?= e(mb_strtolower($eq['marca'] . ' ' . $eq['modelo'] . ' ' . $eq['serie'])) ?>">
-                                <div class="d-flex align-items-center gap-2 text-truncate">
-                                    <div class="equipo-icon" title="Info. Equipo">
-                                        <a href="<?= BASE_PATH ?>/pages/impresoras/detalle.php?id=<?= e($eq['equipo_id']) ?>">
-                                            <i class="bi bi-printer-fill text-secondary"></i>
-                                        </a>
-                                    </div>
-                                    <div class="text-truncate">
-                                        <div class="small fw-semibold text-truncate">
-                                            <?= e($eq['marca'] . ' ' . $eq['modelo']) ?>
-                                        </div>
-                                        <div class="text-secondary text-truncate" style="font-size:.75rem">
-                                            <code><?= e($eq['serie'] ?: 'Sin serie') ?></code>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                                    <span class="badge <?= $statusCls ?>"><?= e($eq['status']) ?></span>
-                                    <a href="<?= BASE_PATH ?>/pages/impresoras/detalle.php?id=<?= $eq['equipo_id'] ?>"
-                                       class="btn btn-sm btn-outline-secondary" title="Ver bitácora">
-                                        <i class="bi bi-journal-text"></i>
+                        <table class="table table-sm mb-0">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Serie</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($d['equipos'] as $eq): ?>
+                            <tr>
+                                <td><?= e($eq['marca']) ?></td>
+                                <td><?= e($eq['modelo']) ?></td>
+                                <td><a href="<?= BASE_PATH ?>/pages/impresoras/detalle.php?id=<?= e($eq['equipo_id']) ?>">
+                                    <code><?= e($eq['serie'] ?: '—') ?></code>
                                     </a>
-                                    <?php if (Auth::tieneRol(ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_TECNICO)): ?>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        <?= e($eq['status']) ?>
+                                    </span>
+                                </td>
+                                <td>
                                     <a href="<?= BASE_PATH ?>/pages/reportes/nuevo.php?equipo_id=<?= $eq['equipo_id'] ?>&cliente_id=<?= $id ?>"
-                                       class="btn btn-sm btn-outline-primary" title="Nuevo reporte para este equipo">
+                                       class="btn btn-xs btn-outline-primary"
+                                       title="Nuevo reporte para este equipo">
                                         <i class="bi bi-file-plus"></i>
                                     </a>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
+                                </td>
+                            </tr>
                             <?php endforeach; ?>
-                        </div>
+                            </tbody>
+                        </table>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
             <?php endforeach; ?>
         </div>
-        <p id="sin-resultados-equipos" class="text-center text-secondary py-3 mb-0 d-none">
-            <i class="bi bi-search me-1"></i> Sin resultados para el filtro aplicado.
-        </p>
         <?php endif; ?>
     </div>
 </div>
@@ -444,6 +379,29 @@ function cancelarEdicion() {
     document.getElementById('vista-lectura').classList.remove('d-none');
     document.getElementById('error-edicion').classList.add('d-none');
 }
+
+// ── Selector de ciudad (con opción "Agregar nueva ciudad…") ───
+const editSelCiudad   = document.getElementById('edit-ciudad-select');
+const editInputCiudad = document.getElementById('edit-ciudad-nueva');
+
+editSelCiudad.addEventListener('change', () => {
+    if (editSelCiudad.value === '__nueva__') {
+        editInputCiudad.classList.remove('d-none');
+        editInputCiudad.value = '';
+        editInputCiudad.focus();
+    } else {
+        editInputCiudad.classList.add('d-none');
+        editInputCiudad.value = '';
+    }
+});
+
+function obtenerCiudadEdicion() {
+    if (editSelCiudad.value === '__nueva__') {
+        return editInputCiudad.value.trim();
+    }
+    return editSelCiudad.value;
+}
+
 // ── Editar departamento ──────────────────────────────────────
 function abrirEditarDepto(id, nombre) {
     document.getElementById('modal-depto-id').value     = id;
@@ -488,11 +446,9 @@ async function guardarDepto() {
             return;
         }
 
-        // Actualizar el nombre en la tarjeta y en el data-attribute de búsqueda
+        // Actualizar el nombre en el acordeón sin recargar la página
         const span = document.getElementById(`nombre-depto-${id}`);
         if (span) span.textContent = nombre;
-        const col = span?.closest('.depto-col');
-        if (col) col.dataset.deptoNombre = nombre.toLowerCase();
 
         bootstrap.Modal.getInstance(
             document.getElementById('modalEditarDepto')
@@ -508,13 +464,22 @@ async function guardarDepto() {
 }
 
 async function guardarEdicion() {
+    const ciudad = obtenerCiudadEdicion();
+
+    if (editSelCiudad.value === '__nueva__' && !ciudad) {
+        document.getElementById('error-edicion').textContent =
+            'Escribe el nombre de la nueva ciudad o selecciona una existente.';
+        document.getElementById('error-edicion').classList.remove('d-none');
+        return;
+    }
+
     const form = new FormData();
     form.append('accion',    'actualizar_cliente');
     form.append('id',        CLI_ID);
     form.append('razon',     document.getElementById('edit-razon').value.trim());
     form.append('reporto',   document.getElementById('edit-reporto').value.trim());
     form.append('direccion', document.getElementById('edit-direccion').value.trim());
-    form.append('ciudad',    document.getElementById('edit-ciudad').value.trim());
+    form.append('ciudad',    ciudad);
     form.append('telefono',  document.getElementById('edit-telefono').value.trim());
     form.append('horario',   document.getElementById('edit-horario').value.trim());
 
@@ -533,40 +498,6 @@ async function guardarEdicion() {
         document.getElementById('error-edicion').classList.remove('d-none');
     }
 }
-
-// ── Filtro en vivo de equipos/departamentos ───────────────────
-(function() {
-    const input = document.getElementById('buscar-equipos');
-    if (!input) return;
-
-    const cols     = Array.from(document.querySelectorAll('.depto-col'));
-    const sinResEl = document.getElementById('sin-resultados-equipos');
-
-    input.addEventListener('input', () => {
-        const q = input.value.trim().toLowerCase();
-        let visibles = 0;
-
-        cols.forEach(col => {
-            const deptoNombre = col.dataset.deptoNombre || '';
-            const items = Array.from(col.querySelectorAll('.equipo-item'));
-            let matchDepto = !q || deptoNombre.includes(q);
-            let algunEquipoVisible = false;
-
-            items.forEach(item => {
-                const texto = item.dataset.equipoTexto || '';
-                const visible = !q || matchDepto || texto.includes(q);
-                item.classList.toggle('d-none', !visible);
-                if (visible) algunEquipoVisible = true;
-            });
-
-            const mostrarCol = !q || matchDepto || algunEquipoVisible;
-            col.classList.toggle('d-none', !mostrarCol);
-            if (mostrarCol) visibles++;
-        });
-
-        sinResEl.classList.toggle('d-none', visibles !== 0);
-    });
-})();
 </script>
 
 <?php require_once INCLUDES . '/footer.php'; ?>

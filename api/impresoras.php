@@ -124,7 +124,7 @@ if ($method === 'GET') {
 if ($method === 'POST') {
 
     if ($accion === 'actualizar') {
-        Auth::requerirRol([ROL_ADMIN, ROL_VENDEDOR, ROL_CALLCENTER]);
+        Auth::requerirRol([ROL_ADMIN, ROL_VENDEDOR, ROL_ADMINISTRATIVO, ROL_TECNICO,ROL_GERENCIA]);
 
         $id    = (int)($_POST['id'] ?? 0);
         $serie = trim($_POST['serie']  ?? '');

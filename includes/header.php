@@ -86,21 +86,21 @@ function navActivo(string $pagina, string $actual): string {
                 </li>
 
                 <?php if (Auth::tieneRol(defined('ROL_ADMIN') ? ROL_ADMIN : 'admin')): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= navActivo('usuarios', $pagina_activa) ?>"
+                        href="<?= BASE_PATH ?>/pages/usuarios/lista.php">
+                        Administrativa
+                        </a>
+                    </li>
+                <?php endif; ?>
+
+                <?php if (Auth::tieneRol(defined('ROL_ADMIN') ? ROL_ADMIN : 'admin')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= navActivo('usuarios', $pagina_activa) ?>"
                        href="<?= BASE_PATH ?>/pages/usuarios/lista.php">
                        <i class="bi bi-person-gear me-1"></i>Usuarios
                     </a>
                 </li>
-                <?php endif; ?>
-
-                <?php if (Auth::tieneRol(defined('ROL_ADMIN') ? ROL_ADMIN : 'admin')): ?>
-                    <li class="nav-item">
-                        <a class="nav-link <?= navActivo('usuarios', $pagina_activa) ?>"
-                        href="<?= BASE_PATH ?>/pages/usuarios/lista.php">
-                        Usuarios
-                        </a>
-                    </li>
                 <?php endif; ?>
 
             </ul>

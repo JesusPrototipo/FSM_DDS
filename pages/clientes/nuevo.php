@@ -5,13 +5,22 @@
 //  Wizard de 3 pasos en una sola página (sin redirecciones intermedias)
 // ============================================================
 require_once dirname(__DIR__, 2) . '/includes/init.php';
-Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_GERENCIA, ROL_VENDEDOR]);
+Auth::requerirRol([ROL_ADMIN, ROL_ADMINISTRATIVO, ROL_TECNICO, ROL_GERENCIA, ROL_VENDEDOR]);
 
 $titulo_pagina = 'Nuevo Cliente';
 $pagina_activa = 'clientes';
 $subtitulo     = 'Registrar nuevo cliente';
 
 require_once INCLUDES . '/header.php';
+
+$pdo = Database::get();
+
+// Ciudades existentes (para el select de Ciudad, con opción de agregar una nueva)
+$ciudadesExistentes = $pdo->query(
+    "SELECT DISTINCT ciudad FROM clientes
+     WHERE ciudad IS NOT NULL AND ciudad <> ''
+     ORDER BY ciudad"
+)->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
 <!-- Indicador de pasos -->
@@ -66,7 +75,15 @@ require_once INCLUDES . '/header.php';
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Ciudad</label>
-                    <input type="text" class="form-control" id="ciudad" placeholder="Ej: Saltillo">
+                    <select class="form-select" id="ciudad-select">
+                        <option value="">— Selecciona una ciudad —</option>
+                        <?php foreach ($ciudadesExistentes as $c): ?>
+                        <option value="<?= e($c) ?>"><?= e($c) ?></option>
+                        <?php endforeach; ?>
+                        <option value="__nueva__">+ Agregar nueva ciudad…</option>
+                    </select>
+                    <input type="text" class="form-control mt-2 d-none" id="ciudad-nueva"
+                           placeholder="Escribe el nombre de la nueva ciudad">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Teléfono</label>
@@ -241,18 +258,43 @@ function irPaso(n) {
     window.scrollTo(0,0);
 }
 
+// ── Selector de ciudad (con opción "Agregar nueva ciudad…") ───
+const selCiudad   = document.getElementById('ciudad-select');
+const inputCiudad = document.getElementById('ciudad-nueva');
+
+selCiudad.addEventListener('change', () => {
+    if (selCiudad.value === '__nueva__') {
+        inputCiudad.classList.remove('d-none');
+        inputCiudad.value = '';
+        inputCiudad.focus();
+    } else {
+        inputCiudad.classList.add('d-none');
+        inputCiudad.value = '';
+    }
+});
+
+function obtenerCiudad() {
+    if (selCiudad.value === '__nueva__') {
+        return inputCiudad.value.trim();
+    }
+    return selCiudad.value;
+}
+
 // ── PASO 1: Guardar cliente ──────────────────────────────────
 async function guardarCliente() {
     ocultarError(1);
     const razon     = document.getElementById('razon').value.trim();
     const reporto   = document.getElementById('reporto').value.trim();
     const direccion = document.getElementById('direccion').value.trim();
-    const ciudad    = document.getElementById('ciudad').value.trim();
+    const ciudad    = obtenerCiudad();
     const telefono  = document.getElementById('telefono').value.trim();
     const horario   = document.getElementById('horario').value.trim();
 
     if (!razon)     return mostrarError(1, 'La Razón Social es obligatoria.');
     if (!direccion) return mostrarError(1, 'La Dirección es obligatoria.');
+    if (selCiudad.value === '__nueva__' && !ciudad) {
+        return mostrarError(1, 'Escribe el nombre de la nueva ciudad o selecciona una existente.');
+    }
 
     const btn = document.getElementById('btn-guardar-cliente');
     setLoading(btn, true);
